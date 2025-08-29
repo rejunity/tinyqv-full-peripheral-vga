@@ -36,7 +36,7 @@ module tqvp_rejunity_vga (
     assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
     // \TODO
 
-    localparam PIXEL_COUNT      = 320;
+    localparam PIXEL_COUNT      = 480;
     localparam REG_LAST_PIXEL   = PIXEL_COUNT / 32 - 1;
     localparam REG_BG_COLOR     = 6'h30;
     localparam REG_FG_COLOR     = 6'h31;
