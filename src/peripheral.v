@@ -36,11 +36,13 @@ module tqvp_rejunity_vga (
     assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
     // \TODO
 
+    localparam PIXEL_COUNT      = 320;
+    localparam REG_LAST_PIXEL   = PIXEL_COUNT / 32 - 1;
     localparam REG_BG_COLOR     = 6'h30;
     localparam REG_FG_COLOR     = 6'h31;
     localparam REG_VGA          = 6'h3F;
 
-    reg [255:0] video_mem;
+    reg [PIXEL_COUNT-1:0] video_mem;
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
 
@@ -50,9 +52,13 @@ module tqvp_rejunity_vga (
             fg_color <= 6'b001011;
         end else begin
             if (~&data_write_n) begin
-                if (address < REG_BG_COLOR) begin
+                // if (address < REG_BG_COLOR) begin
+                //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
+                //         video_mem[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
+                //     end
+                if (address <= REG_LAST_PIXEL) begin
                     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
-                        video_mem[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
+                        video_mem[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
                     end
                 end else if (address == REG_BG_COLOR) begin
                     bg_color <= data_in[5:0];
@@ -82,6 +88,17 @@ module tqvp_rejunity_vga (
         .interrupt(user_interrupt)
     );
 
+    reg [8:0] vmem_index;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            vmem_index <= 9'd0;
+        end else if (vmem_index == PIXEL_COUNT-1) begin
+            vmem_index <= 9'd0;
+        end else begin
+            vmem_index <= vmem_index + 9'd1;
+        end
+    end
+
     reg pixel;
     reg hsync_buf;
     reg vsync_buf;
@@ -92,7 +109,8 @@ module tqvp_rejunity_vga (
         end else if (vga_blank) begin
             pixel <= 1'b0;
         end else begin
-            pixel <= video_mem[vga_x[7:0]];
+            // pixel <= video_mem[vga_x[7:0]];
+            pixel <= video_mem[vmem_index];
         end
         hsync_buf <= vga_hsync;
         vsync_buf <= vga_vsync;
