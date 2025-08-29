@@ -30,13 +30,30 @@ module tqvp_rejunity_vga (
 
     output        user_interrupt  // Dedicated interrupt request for this peripheral
 );
+    // 256 pixel vram (16x16, ~18x14, ~25x10)
+    // 256x4 = 1024
+
+    // 320 pixel vram (20x16)
+    // 320x3 = 960
+
+    // 384 pixel vram (24x16)
+    // 384x2 = 768
+    // 384x2.5 = 960
+    // 
+
+    // vertical
+    // 192x4 = 256x3 = 384x2 = 768
+
+
+
+
     // TODO:
     assign data_ready = 1'b1;
     assign data_out = 32'd0;
     assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
     // \TODO
 
-    localparam PIXEL_COUNT      = 480;
+    localparam PIXEL_COUNT      = 384;
     localparam REG_LAST_PIXEL   = PIXEL_COUNT / 32 - 1;
     localparam REG_BG_COLOR     = 6'h30;
     localparam REG_FG_COLOR     = 6'h31;
@@ -58,14 +75,14 @@ module tqvp_rejunity_vga (
                 //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
                 //         vram[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
                 //     end
-                // if (address <= REG_LAST_PIXEL) begin
-                //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
-                //         vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
-                //     end
-                if (address < 6'h20) begin
+                if (address <= REG_LAST_PIXEL) begin
                     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
-                        vram[{vram_write_bank, address[4:2], 5'b00000} +: 32] <= data_in[31:0];
+                        vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
                     end
+                // if (address < 6'h20) begin
+                //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
+                //         vram[{vram_write_bank, address[4:2], 5'b00000} +: 32] <= data_in[31:0];
+                //     end
                 end else if (address == REG_BG_COLOR) begin
                     bg_color <= data_in[5:0];
                 end else if (address == REG_FG_COLOR) begin
