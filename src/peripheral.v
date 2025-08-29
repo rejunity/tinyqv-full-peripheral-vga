@@ -30,8 +30,11 @@ module tqvp_rejunity_vga (
 
     output        user_interrupt  // Dedicated interrupt request for this peripheral
 );
+    // TODO:
     assign data_ready = 1'b1;
     assign data_out = 32'd0;
+    assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
+    // \TODO
 
     localparam REG_BG_COLOR     = 6'h30;
     localparam REG_FG_COLOR     = 6'h31;
