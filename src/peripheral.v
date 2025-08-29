@@ -36,34 +36,42 @@ module tqvp_rejunity_vga (
     assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
     // \TODO
 
-    localparam PIXEL_COUNT      = 320;
+    localparam PIXEL_COUNT      = 512;
     localparam REG_LAST_PIXEL   = PIXEL_COUNT / 32 - 1;
     localparam REG_BG_COLOR     = 6'h30;
     localparam REG_FG_COLOR     = 6'h31;
-    localparam REG_VGA          = 6'h3F;
+    localparam REG_BANK         = 6'h3F;
 
-    reg [PIXEL_COUNT-1:0] video_mem;
+    reg [PIXEL_COUNT-1:0] vram;
+    reg         vram_write_bank;
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
 
     always @(posedge clk) begin
         if (!rst_n) begin
+            vram_write_bank <= 1'b0;
             bg_color <= 6'b010000;
             fg_color <= 6'b001011;
         end else begin
             if (~&data_write_n) begin
                 // if (address < REG_BG_COLOR) begin
                 //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
-                //         video_mem[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
+                //         vram[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
                 //     end
-                if (address <= REG_LAST_PIXEL) begin
+                // if (address <= REG_LAST_PIXEL) begin
+                //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
+                //         vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
+                //     end
+                if (address < 6'h20) begin
                     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
-                        video_mem[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
+                        vram[{vram_write_bank, address[4:2], 5'b00000} +: 32] <= data_in[31:0];
                     end
                 end else if (address == REG_BG_COLOR) begin
                     bg_color <= data_in[5:0];
                 end else if (address == REG_FG_COLOR) begin
                     fg_color <= data_in[5:0];
+                end else if (address == REG_BANK) begin
+                    vram_write_bank <= data_in[0];
                 end
             end
         end
@@ -88,14 +96,14 @@ module tqvp_rejunity_vga (
         .interrupt(user_interrupt)
     );
 
-    reg [8:0] vmem_index;
+    reg [8:0] vram_index;
     always @(posedge clk) begin
         if (!rst_n) begin
-            vmem_index <= 9'd0;
-        end else if (vmem_index == PIXEL_COUNT-1) begin
-            vmem_index <= 9'd0;
+            vram_index <= 9'd0;
+        // end else if (vram_index == PIXEL_COUNT-1) begin
+        //     vram_index <= 9'd0;
         end else begin
-            vmem_index <= vmem_index + 9'd1;
+            vram_index <= vram_index + 9'd1;
         end
     end
 
@@ -109,8 +117,8 @@ module tqvp_rejunity_vga (
         end else if (vga_blank) begin
             pixel <= 1'b0;
         end else begin
-            // pixel <= video_mem[vga_x[7:0]];
-            pixel <= video_mem[vmem_index];
+            // pixel <= vram[vga_x[7:0]];
+            pixel <= vram[vram_index];
         end
         hsync_buf <= vga_hsync;
         vsync_buf <= vga_vsync;
