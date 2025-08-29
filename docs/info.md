@@ -13,26 +13,37 @@ You can also include images in this folder and reference them in the markdown. E
 
 # Your project title
 
-Author: Your Name
+Author: ReJ aka Renaldas Zioma
 
 Peripheral index: nn
 
 ## What it does
 
-Explain what your peripheral does and how it works
+TODO: Explain what your peripheral does and how it works
 
 ## Register map
 
-Document the registers that are used to interact with your peripheral
 
-| Address | Name  | Access | Description                                                         |
-|---------|-------|--------|---------------------------------------------------------------------|
-| 0x00    | DATA  | R/W    | A word of data                                                      |
+| Address | Name    | Access | Description                                                      |
+|---------|---------|--------|------------------------------------------------------------------|
+| 0x00    | PIXDAT0 | W      | Pixel data (1-bit per pixel)   0..31                             |
+| 0x04    | PIXDAT1 | W      | Pixel data (1-bit per pixel)  32..63                             |
+| 0x08    | PIXDAT2 | W      | Pixel data (1-bit per pixel)  64..xx                             |
+| 0x0C    | PIXDAT3 | W      | Pixel data (1-bit per pixel)  xx..xx                             |
+| 0x10    | PIXDAT4 | W      | Pixel data (1-bit per pixel)  xx..xx                             |
+| 0x14    | PIXDAT5 | W      | Pixel data (1-bit per pixel)  xx..xx                             |
+| 0x18    | PIXDAT6 | W      | Pixel data (1-bit per pixel)  xx..xx                       		|
+| 0x1C    | PIXDAT7 | W      | Pixel data (1-bit per pixel) 224..255                            |
+| 0x20    | ????  	| ?      | ???									                       		|
+| 0x24    | ????  	| ?      | ???									                            |
+| 0x30	  | BGCOLOR | W	     | Background color: xxBBGGRR (default 010000, dark blue)			|
+| 0x31	  | FGCOLOR	| W		 | Foreground color: xxBBGGRR (default 001011, golden yellow)		|
+| 0x3F	  | VGA     | R	     | VGA status: interrupt (bit 0), vsync (bit 1), hsync (bit 2). Clears interrupt on read. |
 
 ## How to test
 
-Explain how to use your project
+TODO: Explain how to use your project
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+Tiny VGA Pmod
