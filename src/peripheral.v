@@ -30,53 +30,76 @@ module tqvp_rejunity_vga (
 
     output        user_interrupt  // Dedicated interrupt request for this peripheral
 );
+    assign data_ready = 1'b1;
+    assign data_out = 32'd0;
 
-    // Implement a 32-bit read/write register at address 0
-    reg [31:0] example_data;
+    localparam REG_BG_COLOR     = 6'h30;
+    localparam REG_FG_COLOR     = 6'h31;
+    localparam REG_VGA          = 6'h3F;
+
+    reg [255:0] video_mem;
+    reg [5:0]   bg_color;
+    reg [5:0]   fg_color;
+
     always @(posedge clk) begin
         if (!rst_n) begin
-            example_data <= 0;
+            bg_color <= 6'b010000;
+            fg_color <= 6'b001011;
         end else begin
-            if (address == 6'h0) begin
-                if (data_write_n != 2'b11)              example_data[7:0]   <= data_in[7:0];
-                if (data_write_n[1] != data_write_n[0]) example_data[15:8]  <= data_in[15:8];
-                if (data_write_n == 2'b10)              example_data[31:16] <= data_in[31:16];
+            if (~&data_write_n) begin
+                if (address < REG_BG_COLOR) begin
+                    if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
+                        video_mem[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
+                    end
+                end else if (address == REG_BG_COLOR) begin
+                    bg_color <= data_in[5:0];
+                end else if (address == REG_FG_COLOR) begin
+                    fg_color <= data_in[5:0];
+                end
             end
         end
     end
 
-    // The bottom 8 bits of the stored data are added to ui_in and output to uo_out.
-    assign uo_out = example_data[7:0] + ui_in;
+    wire        vga_cli;
+    wire [10:0] vga_x;
+    wire  [9:0] vga_y;
+    wire        vga_hsync;
+    wire        vga_vsync;
+    wire        vga_blank;
 
-    // Address 0 reads the example data register.  
-    // Address 4 reads ui_in
-    // All other addresses read 0.
-    assign data_out = (address == 6'h0) ? example_data :
-                      (address == 6'h4) ? {24'h0, ui_in} :
-                      32'h0;
+    vga_timing vga (
+        .clk,
+        .rst_n,
+        .cli(vga_cli),
+        .x(vga_x),
+        .y(vga_y),
+        .hsync(vga_hsync),
+        .vsync(vga_vsync),
+        .blank(vga_blank),
+        .interrupt(user_interrupt)
+    );
 
-    // All reads complete in 1 clock
-    assign data_ready = 1;
-    
-    // User interrupt is generated on rising edge of ui_in[6], and cleared by writing a 1 to the low bit of address 8.
-    reg example_interrupt;
-    reg last_ui_in_6;
+    reg pixel;
+    reg hsync_buf;
+    reg vsync_buf;
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            example_interrupt <= 0;
+            pixel <= 1'b0;
+        end else if (vga_blank) begin
+            pixel <= 1'b0;
+        end else begin
+            pixel <= video_mem[vga_x[7:0]];
         end
-
-        if (ui_in[6] && !last_ui_in_6) begin
-            example_interrupt <= 1;
-        end else if (address == 6'h8 && data_write_n != 2'b11 && data_in[0]) begin
-            example_interrupt <= 0;
-        end
-
-        last_ui_in_6 <= ui_in[6];
+        hsync_buf <= vga_hsync;
+        vsync_buf <= vga_vsync;
     end
 
-    assign user_interrupt = example_interrupt;
+    always @(posedge clk) begin
+    end
+
+    wire [5:0] rrggbb = pixel ? fg_color : bg_color;
+    assign uo_out = {hsync_buf, rrggbb[5:3], vsync_buf, rrggbb[2:0]};
 
     // List all unused inputs to prevent warnings
     // data_read_n is unused as none of our behaviour depends on whether
