@@ -50,25 +50,23 @@ module tqvp_rejunity_vga (
     localparam REG_LAST_PIXEL   = PIXEL_COUNT / 8 - 1;
     localparam REG_BG_COLOR     = 6'h30;
     localparam REG_FG_COLOR     = 6'h31;
-    localparam REG_BANK         = 6'h3F;
+    // localparam REG_BANK         = 6'h3F;
 
     localparam REQ_WAIT_HBLANK  = 6'h00;
     localparam REQ_WAIT_PIXEL0  = 6'h04;
     // localparam REG_Y            = 6'h10;
 
     reg [PIXEL_COUNT-1:0] vram;
-    reg         vram_write_bank;
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
 
     reg         pause_cpu;
     reg         wait_hblank;
     reg         wait_pixel0;
-    assign data_ready = !pause_cpu ; // && (&data_read_n);
+    assign data_ready = !pause_cpu;
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            vram_write_bank <= 1'b0;
             bg_color <= 6'b010000;
             fg_color <= 6'b001011;
 
@@ -78,24 +76,14 @@ module tqvp_rejunity_vga (
         end else begin
             // WRITE register
             if (~&data_write_n) begin
-                // if (address < REG_BG_COLOR) begin
-                //     if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
-                //         vram[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
-                //     end
                 if (address <= REG_LAST_PIXEL) begin
                     if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
                         vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
                     end
-                // if (address < 6'h20) begin
-                //     if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
-                //         vram[{vram_write_bank, address[4:2], 5'b00000} +: 32] <= data_in[31:0];
-                //     end
                 end else if (address == REG_BG_COLOR) begin
                     bg_color <= data_in[5:0];
                 end else if (address == REG_FG_COLOR) begin
                     fg_color <= data_in[5:0];
-                end else if (address == REG_BANK) begin
-                    vram_write_bank <= data_in[0];
                 end
             // READ register
             end else if (~&data_read_n) begin
@@ -107,14 +95,6 @@ module tqvp_rejunity_vga (
                     pause_cpu   <= 1'b1;
                     wait_hblank <= 1'b0;
                     wait_pixel0 <= 1'b1;
-                // end else if (address == REG_Y) begin
-                //     // 11 = no read,  00 = 8-bits, 01 = 16-bits, 10 = 32-bits
-                //     if          (data_write_n == 2'b00) begin
-                //         data_out[7:0]  <= vga_y[9:2];
-                //     end else if (data_write_n == 2'b01) begin
-                //         data_out[15:0] <= vga_y[9:2];
-                //     end else if (data_write_n == 2'b10) begin
-                //         data_out[31:0] <= {22'd0, vga_y};
                 end
             end
 
@@ -170,7 +150,6 @@ module tqvp_rejunity_vga (
         end else if (vga_blank) begin
             pixel <= 1'b0;
         end else begin
-            // pixel <= vram[vga_x[7:0]];
             pixel <= vram[vram_index];
         end
         hsync_buf <= vga_hsync;
@@ -178,14 +157,11 @@ module tqvp_rejunity_vga (
     end
 
 
-    // wire [5:0] rrggbb = {6{pixel}} ? fg_color : bg_color;
     wire [5:0] rrggbb = pixel ? fg_color : bg_color;
     assign uo_out = {hsync_buf, rrggbb[5:3], vsync_buf, rrggbb[2:0]};
     assign data_out = {22'd0, vga_y};
 
     // List all unused inputs to prevent warnings
-    // data_read_n is unused as none of our behaviour depends on whether
-    // registers are being read.
-    wire _unused = &{data_read_n, 1'b0};
+    wire _unused = &{ui_in, 1'b0};
 
 endmodule
