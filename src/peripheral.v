@@ -72,15 +72,15 @@ module tqvp_rejunity_vga (
         end else begin
             if (~&data_write_n) begin
                 // if (address < REG_BG_COLOR) begin
-                //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
+                //     if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
                 //         vram[{address[4:2], 5'b00000} +: 32] <= data_in[31:0];
                 //     end
                 if (address <= REG_LAST_PIXEL) begin
-                    if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
+                    if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
                         vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
                     end
                 // if (address < 6'h20) begin
-                //     if (data_write_n < 2'b10) begin // TODO: only 32-bit writes are supported atm
+                //     if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
                 //         vram[{vram_write_bank, address[4:2], 5'b00000} +: 32] <= data_in[31:0];
                 //     end
                 end else if (address == REG_BG_COLOR) begin
