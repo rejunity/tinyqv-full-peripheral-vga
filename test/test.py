@@ -85,8 +85,19 @@ async def test_project(dut):
     assert await tqv.read_word_reg(0x0) == (Y+3,0) # 2
     await measure_hsync()
     assert await tqv.read_word_reg(0x0) == (Y+4,0) # 3
-    # assert await tqv.read_word_reg(0x4) == (1,0) # 0x82345678
-    # assert await tqv.read_word_reg(0x4) == (1,0) # 0x82345678
+    await measure_hsync()
+    # assert await tqv.read_word_reg(0x0) == (Y+5,0) # 4
+    # await measure_hsync()
+    # assert await tqv.read_word_reg(0x0) == (Y+6,0) # 5
+    # await measure_hsync()
+    # assert await tqv.read_word_reg(0x0) == (Y+7,0) # 6
+    # await measure_hsync()
+    # assert await tqv.read_word_reg(0x0) == (Y+8,0) # 7
+
+
+    # while ((await tqv.read_word_reg(0x0))[0] < 32):
+    #     # pass
+    #     await measure_hsync()
 
     # # Set an input value, in the example this will be added to the register value
     # dut.ui_in.value = 30
