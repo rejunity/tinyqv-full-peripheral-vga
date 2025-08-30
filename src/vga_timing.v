@@ -12,6 +12,7 @@ module vga_timing (
     output reg [ 9:0] y,
     output reg hsync,
     output reg vsync,
+    output reg retrace,
     output wire blank,
     output reg interrupt
 );
@@ -48,18 +49,21 @@ always @(posedge clk) begin
         hsync <= 0;
         vsync <= 0;
         interrupt <= 0;
+        retrace <= 0;
     end else begin
         if (x == `H_NEXT) begin
             x <= 0;
         end else begin
             x <= x + 1;
         end
+        retrace <= 0;
         if (x == `H_SYNC) begin
-            if(y == `V_NEXT) begin
+            if (y == `V_NEXT) begin
                 y <= 0;
                 interrupt <= 1;
             end else begin
                 y <= y + 1;
+                retrace <= 1;
             end
         end
         hsync <= !(x >= `H_SYNC && x < `H_BPORCH);
