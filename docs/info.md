@@ -23,7 +23,6 @@ TODO: Explain what your peripheral does and how it works
 
 ## Register map
 
-
 | Address | Name    | Access | Description                                                      |
 |---------|---------|--------|------------------------------------------------------------------|
 | 0x00    | PIXDAT0 | W      | Pixel data (1-bit per pixel)   0..31                             |
@@ -38,7 +37,12 @@ TODO: Explain what your peripheral does and how it works
 | 0x24    | ????  	| ?      | ???									                            |
 | 0x30	  | BGCOLOR | W	     | Background color: xxBBGGRR (default 010000, dark blue)			|
 | 0x31	  | FGCOLOR	| W		 | Foreground color: xxBBGGRR (default 001011, golden yellow)		|
-| 0x3F	  | VGA     | R	     | VGA status: interrupt (bit 0), vsync (bit 1), hsync (bit 2). Clears interrupt on read. |
+
+| Address | Name    | Access | Description                                                      |
+|---------|-------------|--------|--------------------------------------------------------------|
+| 0x00    | WAIT_HBLANK | R      | Block CPU until Horizontal BLANK                             |
+| 0x04    | WAIT_PIXEL0 | R      | Block CPU until the 1st pixel of the buffer is being displayed. |
+| 0x3F	  | VGA         | R	     | VGA status: interrupt (bit 0), vsync (bit 1), hsync (bit 2). Clears interrupt on read. |
 
 ## How to test
 

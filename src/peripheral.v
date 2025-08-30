@@ -5,9 +5,6 @@
 
 `default_nettype none
 
-// Change the name of this module to something that reflects its functionality and includes your name for uniqueness
-// For example tqvp_yourname_spi for an SPI peripheral.
-// Then edit tt_wrapper.v line 41 and change tqvp_example to your chosen module name.
 module tqvp_rejunity_vga (
     input         clk,          // Clock - the TinyQV project clock is normally set to 64MHz.
     input         rst_n,        // Reset_n - low to reset.
@@ -45,11 +42,7 @@ module tqvp_rejunity_vga (
     // 192x4 = 256x3 = 384x2 = 768
 
 
-
-
     // TODO:
-    assign data_ready = 1'b1;
-    assign data_out = 32'd0;
     assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
     // \TODO
 
@@ -59,17 +52,31 @@ module tqvp_rejunity_vga (
     localparam REG_FG_COLOR     = 6'h31;
     localparam REG_BANK         = 6'h3F;
 
+    localparam REQ_WAIT_HBLANK  = 6'h00;
+    localparam REQ_WAIT_PIXEL0  = 6'h04;
+    // localparam REG_Y            = 6'h10;
+
     reg [PIXEL_COUNT-1:0] vram;
     reg         vram_write_bank;
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
+
+    reg         pause_cpu;
+    reg         wait_hblank;
+    reg         wait_pixel0;
+    assign data_ready = !pause_cpu ; // && (&data_read_n);
 
     always @(posedge clk) begin
         if (!rst_n) begin
             vram_write_bank <= 1'b0;
             bg_color <= 6'b010000;
             fg_color <= 6'b001011;
+
+            pause_cpu   <= 1'b0;
+            wait_hblank <= 1'b0;
+            wait_pixel0 <= 1'b0;
         end else begin
+            // WRITE register
             if (~&data_write_n) begin
                 // if (address < REG_BG_COLOR) begin
                 //     if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
@@ -90,6 +97,35 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_BANK) begin
                     vram_write_bank <= data_in[0];
                 end
+            // READ register
+            end else if (~&data_read_n) begin
+                if          (address == REQ_WAIT_HBLANK) begin
+                    pause_cpu   <= 1'b1;
+                    wait_hblank <= 1'b1;
+                    wait_pixel0 <= 1'b0;
+                end else if (address == REQ_WAIT_PIXEL0) begin
+                    pause_cpu   <= 1'b1;
+                    wait_hblank <= 1'b0;
+                    wait_pixel0 <= 1'b1;
+                // end else if (address == REG_Y) begin
+                //     // 11 = no read,  00 = 8-bits, 01 = 16-bits, 10 = 32-bits
+                //     if          (data_write_n == 2'b00) begin
+                //         data_out[7:0]  <= vga_y[9:2];
+                //     end else if (data_write_n == 2'b01) begin
+                //         data_out[15:0] <= vga_y[9:2];
+                //     end else if (data_write_n == 2'b10) begin
+                //         data_out[31:0] <= {22'd0, vga_y};
+                end
+            end
+
+            if (wait_hblank && vga_blank) begin // NOTE: do not block cpu during the VBLANK/VSYNC
+                                                // TODO: block until the next blank, if already inside the blank
+                pause_cpu   <= 1'b0;
+                wait_hblank <= 1'b0;
+            end
+            if (wait_pixel0 && vram_index == 0) begin
+                pause_cpu   <= 0;
+                wait_pixel0 <= 0;
             end
         end
     end
@@ -141,11 +177,11 @@ module tqvp_rejunity_vga (
         vsync_buf <= vga_vsync;
     end
 
-    always @(posedge clk) begin
-    end
 
+    // wire [5:0] rrggbb = {6{pixel}} ? fg_color : bg_color;
     wire [5:0] rrggbb = pixel ? fg_color : bg_color;
     assign uo_out = {hsync_buf, rrggbb[5:3], vsync_buf, rrggbb[2:0]};
+    assign data_out = {22'd0, vga_y};
 
     // List all unused inputs to prevent warnings
     // data_read_n is unused as none of our behaviour depends on whether

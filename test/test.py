@@ -33,10 +33,60 @@ async def test_project(dut):
     dut._log.info("Test project behavior")
 
     # Test register write and read back
-    await tqv.write_word_reg(0, 0x82345678)
-    assert await tqv.read_byte_reg(0) == 0 # 0x78
-    assert await tqv.read_hword_reg(0) == 0 # 0x5678
-    assert await tqv.read_word_reg(0) == 0 # 0x82345678
+    # await tqv.write_word_reg(0,  0) #x82345678)
+    await tqv.write_word_reg(0,  0)
+    await tqv.write_word_reg(4,  0x01010101)
+    await tqv.write_word_reg(8,  0x08080808)
+    await tqv.write_word_reg(12, 0x0A0A0A0A) # 128
+    await tqv.write_word_reg(16, 0x0F0F0F0F)
+    await tqv.write_word_reg(20, 0x10101010)
+    await tqv.write_word_reg(24, 0x80808080)
+    await tqv.write_word_reg(28, 0xFFFFFFFF) # 256
+    await tqv.write_word_reg(32, 0x1AAAAAAA)
+    await tqv.write_word_reg(36, 0x2A1A1A1A)
+    await tqv.write_word_reg(40, 0x3A8A8A8A)
+    await tqv.write_word_reg(44, 0x4AFAFAFA) # 320
+    # await ClockCycles(dut.clk, 1)
+
+    # assert await tqv.read_word_reg(0x0) == (0,370) # 0
+    # assert await tqv.read_byte_reg(0x10) == (0,0) # 0x78
+    # assert await tqv.read_hword_reg(0x10) == (0,0) # 0x5678
+    # assert await tqv.read_word_reg(0x10) == (0,0) # 0x82345678
+
+    async def measure_hsync():
+        print(dut.uo_out.value)
+        cycles = 0
+        # assert dut.uo_out.value & 0x80 == 0x80  # inverted hsync
+        while (dut.uo_out.value & 0x80 == 0x80):
+            await ClockCycles(dut.clk, 1)
+            cycles += 1
+        print("pre-hsync:", cycles)
+        cycles = 0
+        print(dut.uo_out.value)
+        while (dut.uo_out.value & 0x80 != 0x80):
+            await ClockCycles(dut.clk, 1)
+            cycles += 1
+        print("hsync:", cycles)
+        return cycles
+    Y=2
+    assert await tqv.read_word_reg(0x0) == (Y+0,0) # 0
+    await measure_hsync()
+
+    # assert await tqv.read_word_reg(0x0) == (0,370) # 0
+    assert await tqv.read_word_reg(0x0)  == (Y+1,0) # 0
+    assert await tqv.read_word_reg(0x10) == (Y+1,0) # 0
+    await measure_hsync()
+    # assert await tqv.read_word_reg(0x0) == (1,0) # 0
+    # assert await tqv.read_word_reg(0x0) == (1,539) # 0
+    # assert await tqv.read_byte_reg(0x10) == (1,0) # 0x78
+    assert await tqv.read_word_reg(0x0) == (Y+2,0) # 1
+    # assert await tqv.read_word_reg(0x0) == (2,0) # 1
+    await measure_hsync()
+    assert await tqv.read_word_reg(0x0) == (Y+3,0) # 2
+    await measure_hsync()
+    assert await tqv.read_word_reg(0x0) == (Y+4,0) # 3
+    # assert await tqv.read_word_reg(0x4) == (1,0) # 0x82345678
+    # assert await tqv.read_word_reg(0x4) == (1,0) # 0x82345678
 
     # # Set an input value, in the example this will be added to the register value
     # dut.ui_in.value = 30
