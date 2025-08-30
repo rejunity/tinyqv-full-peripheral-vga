@@ -54,7 +54,7 @@ module tqvp_rejunity_vga (
     // \TODO
 
     localparam PIXEL_COUNT      = 384;
-    localparam REG_LAST_PIXEL   = PIXEL_COUNT / 32 - 1;
+    localparam REG_LAST_PIXEL   = PIXEL_COUNT / 8 - 1;
     localparam REG_BG_COLOR     = 6'h30;
     localparam REG_FG_COLOR     = 6'h31;
     localparam REG_BANK         = 6'h3F;
