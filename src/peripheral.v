@@ -27,6 +27,9 @@ module tqvp_rejunity_vga (
 
     output        user_interrupt  // Dedicated interrupt request for this peripheral
 );
+    // length 
+
+
     // 256 pixel vram (16x16, ~18x14, ~25x10)
     // 256x3 = 768
     // 256x4 = 1024
@@ -44,6 +47,10 @@ module tqvp_rejunity_vga (
 
     // TODO:
     assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
+    // REG_SET_VRAM_INDEX = 10bit
+    // REG_SET_1024vs960 = 1bit
+    // REG_SET_4COLOR = 1bit
+    // REG_SET_COLOR2, REG_SET_COLOR3 = 6bit x 2
     // \TODO
 
     localparam integer  PIXEL_COUNT      = 320;
@@ -55,6 +62,35 @@ module tqvp_rejunity_vga (
     localparam [5:0]    REQ_WAIT_HBLANK  = 6'h00;
     localparam [5:0]    REQ_WAIT_PIXEL0  = 6'h04;
     // localparam REG_Y            = 6'h10;
+
+    // test 20x384
+    // localparam DEFAULT_STRIDE = 9'd20;
+    // localparam DEFAULT_PIXEL_WIDTH  = 7'd48; // 960/20=48
+    // localparam DEFAULT_PIXEL_HEIGHT = 7'd2;
+
+    // 320 vram = 20x16 @ 960x768
+    // localparam DEFAULT_STRIDE = 9'd20;
+    // localparam DEFAULT_PIXEL_WIDTH  = 7'd48; // 960/20=48
+    // localparam DEFAULT_PIXEL_HEIGHT = 7'd48; // 768/16=48
+
+    // 320 vram = 20x16 @ 1024x768
+    localparam DEFAULT_STRIDE = 9'd20;
+    localparam DEFAULT_PIXEL_WIDTH  = 7'd52; // 1024/20=~52
+    // localparam DEFAULT_PIXEL_HEIGHT = 7'd48; // 768/16=48
+
+    // 320 vram = 32x10 @ 1024x768
+    // localparam DEFAULT_STRIDE = 9'd32;
+    // localparam DEFAULT_PIXEL_WIDTH  = 7'd32; // 1024/32=32
+    // localparam DEFAULT_PIXEL_HEIGHT = 7'd77; // 768/10=~77
+
+
+    // 256 vram = 18x14 @ 1024x768
+    // localparam DEFAULT_STRIDE = 9'd18;
+    // localparam DEFAULT_PIXEL_WIDTH  = 7'd54; // 1024/18=~54
+    // localparam DEFAULT_PIXEL_HEIGHT = 7'd55; // 768/14=~55
+
+    localparam DEFAULT_PIXEL_HEIGHT = 7'd2;
+
 
     reg [PIXEL_COUNT-1:0] vram;
     reg [5:0]   bg_color;
@@ -135,59 +171,51 @@ module tqvp_rejunity_vga (
     reg [6:0] vga_y_per_pixel;
     reg [6:0] vram_pixel_x;
     reg [6:0] vram_pixel_y;
-    reg [8:0] reset_vram_index_on_blank;
+    reg [8:0] vram_index_on_blank;
+    reg [8:0] vram_stride;
+    reg [8:0] vram_index;
+
+    wire [8:0] advance_vram_index_by_one    = (vram_index + 9'd1        < PIXEL_COUNT)  ? vram_index + 9'd1
+                                                                                        : 9'd0;
+
+    wire [8:0] advance_vram_index_by_stride = (vram_index_on_blank + 
+                                                            vram_stride < PIXEL_COUNT)  ? vram_index_on_blank + vram_stride
+                                                                                        : 9'd0;
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            reset_vram_index_on_blank 
+            vram_index_on_blank 
                             <= 9'd0;
             vram_index      <= 9'd0;
             vram_pixel_x    <= 7'd0;
             vram_pixel_y    <= 7'd0;
-            vga_x_per_pixel <= 7'd57 - 1; // 1024/18=~56  (18x14 = 252)
-            // vga_y_per_pixel <= 7'd56 - 1; // 768/14 =~56
-            // vga_y_per_pixel <= 7'd4 - 1;
-            vga_y_per_pixel <= 7'd2 - 1;
+            vga_x_per_pixel <= DEFAULT_PIXEL_WIDTH  - 7'd1;
+            vga_y_per_pixel <= DEFAULT_PIXEL_HEIGHT - 7'd1;
+            vram_stride     <= DEFAULT_STRIDE;
+
         end else if (vga_new_scanline) begin
             vram_pixel_x <= 7'd0;
-            vram_index   <= reset_vram_index_on_blank;
             if (vram_pixel_y == vga_y_per_pixel) begin
-                if (vram_index == PIXEL_COUNT-1) begin
-                    reset_vram_index_on_blank <= 9'd0;
-                end else begin
-                    reset_vram_index_on_blank <= vram_index + 9'd1;
-                end
                 vram_pixel_y <= 7'd0;
+                vram_index   <= advance_vram_index_by_stride;
+                vram_index_on_blank <= advance_vram_index_by_stride;
             end else begin
                 vram_pixel_y <= vram_pixel_y + 7'd1;
+                vram_index   <= vram_index_on_blank;
             end
+
         end else if (vga_blank) begin
             vram_pixel_x <= 7'd0;
+
         end else begin
             if (vram_pixel_x == vga_x_per_pixel) begin
-                vram_index   <= vram_index + 9'd1;
+                vram_index   <= advance_vram_index_by_one;
                 vram_pixel_x <= 7'd0;
             end else begin
                 vram_pixel_x <= vram_pixel_x + 7'd1;
             end
-
-            if (vram_index == PIXEL_COUNT-1) begin
-                vram_index   <= 9'd0;
-            end
         end
     end
-
-    reg [8:0] vram_index;
-    // always @(posedge clk) begin
-    //     if (!rst_n) begin
-    //         vram_index <= 9'd0;
-    //     end else if (vram_index == PIXEL_COUNT-1) begin
-    //         vram_index <= 9'd0;
-    //     end else begin
-    //         vram_index <= vram_index + 9'd1;
-    //     end
-    // end
-
 
     reg [5:0] bbggrr;
     reg hsync_buf;
