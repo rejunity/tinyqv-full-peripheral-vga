@@ -107,6 +107,7 @@ module tqvp_rejunity_vga (
         if (!rst_n) begin
             bg_color <= 6'b010000;
             fg_color <= 6'b001011;
+            vram_stride <= DEFAULT_STRIDE;
 
             pause_cpu   <= 1'b0;
             wait_hblank <= 1'b0;
@@ -196,7 +197,6 @@ module tqvp_rejunity_vga (
             vram_pixel_y    <= 7'd0;
             vga_x_per_pixel <= DEFAULT_PIXEL_WIDTH  - 7'd1;
             vga_y_per_pixel <= DEFAULT_PIXEL_HEIGHT - 7'd1;
-            vram_stride     <= DEFAULT_STRIDE;
 
         end else if (vga_new_scanline) begin
             vram_pixel_x <= 7'd0;
