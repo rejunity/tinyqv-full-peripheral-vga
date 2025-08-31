@@ -189,25 +189,23 @@ module tqvp_rejunity_vga (
     // end
 
 
-    reg pixel;
+    reg [5:0] bbggrr;
     reg hsync_buf;
     reg vsync_buf;
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            pixel <= 1'b0;
+            bbggrr <= 6'b00_00_00;
         end else if (vga_blank) begin
-            pixel <= 1'b0;
+            bbggrr <= 6'b00_00_00;
         end else begin
-            pixel <= vram[vram_index];
+            bbggrr <= vram[vram_index] ? fg_color : bg_color;
         end
         hsync_buf <= vga_hsync;
         vsync_buf <= vga_vsync;
     end
 
-
-    wire [5:0] rrggbb = pixel ? fg_color : bg_color;
-    assign uo_out = {hsync_buf, rrggbb[5:3], vsync_buf, rrggbb[2:0]};
+    assign uo_out = {hsync_buf, bbggrr[5:3], vsync_buf, bbggrr[2:0]};
     assign data_out = {22'd0, vga_y};
 
     // List all unused inputs to prevent warnings
