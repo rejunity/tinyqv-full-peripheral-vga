@@ -53,8 +53,9 @@ module tqvp_rejunity_vga (
     // REG_SET_COLOR2, REG_SET_COLOR3 = 6bit x 2
     // \TODO
 
-    localparam integer  PIXEL_COUNT      = 9'd320;
-    localparam [5:0]    REG_LAST_PIXEL   = PIXEL_COUNT / 8 - 6'd1;
+    `define PIXEL_COUNT 320
+    // localparam integer  PIXEL_COUNT      = 9'd320;
+    localparam [5:0]    REG_LAST_PIXEL   = `PIXEL_COUNT / 8 - 1;
     localparam [5:0]    REG_BG_COLOR     = 6'h30;
     localparam [5:0]    REG_FG_COLOR     = 6'h31;
     localparam [5:0]    REG_VRAM_STRIDE  = 6'h34;
@@ -93,7 +94,7 @@ module tqvp_rejunity_vga (
     localparam DEFAULT_PIXEL_HEIGHT = 7'd2;
 
 
-    reg [PIXEL_COUNT-1:0] vram;
+    reg [`PIXEL_COUNT-1:0] vram;
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
 
@@ -179,11 +180,11 @@ module tqvp_rejunity_vga (
     reg [8:0] vram_stride;
     reg [8:0] vram_index;
 
-    wire [8:0] advance_vram_index_by_one    = (vram_index + 9'd1        < PIXEL_COUNT)  ? vram_index + 9'd1
+    wire [8:0] advance_vram_index_by_one    = (vram_index + 9'd1        < `PIXEL_COUNT)  ? vram_index + 9'd1
                                                                                         : 9'd0;
 
     wire [8:0] advance_vram_index_by_stride = (vram_index_on_blank + 
-                                                            vram_stride < PIXEL_COUNT)  ? vram_index_on_blank + vram_stride
+                                                            vram_stride < `PIXEL_COUNT)  ? vram_index_on_blank + vram_stride
                                                                                         : 9'd0;
 
     always @(posedge clk) begin
