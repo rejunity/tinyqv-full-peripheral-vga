@@ -57,6 +57,7 @@ module tqvp_rejunity_vga (
     localparam [5:0]    REG_LAST_PIXEL   = PIXEL_COUNT / 8 - 6'd1;
     localparam [5:0]    REG_BG_COLOR     = 6'h30;
     localparam [5:0]    REG_FG_COLOR     = 6'h31;
+    localparam [5:0]    REG_VRAM_STRIDE  = 6'h34;
     // localparam REG_BANK         = 6'h3F;
 
     localparam [5:0]    REQ_WAIT_HBLANK  = 6'h00;
@@ -120,6 +121,9 @@ module tqvp_rejunity_vga (
                     bg_color <= data_in[5:0];
                 end else if (address == REG_FG_COLOR) begin
                     fg_color <= data_in[5:0];
+                end else if (address == REG_VRAM_STRIDE) begin
+                    vram_stride <= data_in[8:0];
+                    // if (data_write_n == 2'b00) // TODO: support 8-bit write as well by setting highest bit(s) to 0
                 end
             // READ register
             end else if (~&data_read_n) begin

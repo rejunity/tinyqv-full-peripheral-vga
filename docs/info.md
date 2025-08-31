@@ -37,6 +37,9 @@ TODO: Explain what your peripheral does and how it works
 | 0x24    | ????  	| ?      | ???									                            |
 | 0x30	  | BGCOLOR | W	     | Background color: xxBBGGRR (default 010000, dark blue)			|
 | 0x31	  | FGCOLOR	| W		 | Foreground color: xxBBGGRR (default 001011, golden yellow)		|
+| 0x32	  | ??COLOR	| W		 | ???																|
+| 0x33	  | ??COLOR	| W		 | ???																|
+| 0x34	  | STRIDE	| W		 | 9-bit VRAM stride on a new scanline								|
 
 | Address | Name        | Access | Description                                                  |
 |---------|-------------|--------|--------------------------------------------------------------|
