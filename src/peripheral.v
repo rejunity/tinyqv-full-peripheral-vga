@@ -209,6 +209,6 @@ module tqvp_rejunity_vga (
     assign data_out = {22'd0, vga_y};
 
     // List all unused inputs to prevent warnings
-    wire _unused = &{ui_in, 1'b0};
+    wire _unused = &{ui_in, vga_x, 1'b0};
 
 endmodule
