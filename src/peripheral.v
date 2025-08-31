@@ -55,10 +55,11 @@ module tqvp_rejunity_vga (
 
     `define PIXEL_COUNT 320
     // localparam integer  PIXEL_COUNT      = 9'd320;
-    localparam [5:0]    REG_LAST_PIXEL   = `PIXEL_COUNT / 8 - 1;
-    localparam [5:0]    REG_BG_COLOR     = 6'h30;
-    localparam [5:0]    REG_FG_COLOR     = 6'h31;
-    localparam [5:0]    REG_VRAM_STRIDE  = 6'h34;
+    localparam [5:0]    REG_LAST_PIXEL      = `PIXEL_COUNT / 8 - 1;
+    localparam [5:0]    REG_BG_COLOR        = 6'h30;
+    localparam [5:0]    REG_FG_COLOR        = 6'h31;
+    localparam [5:0]    REG_VRAM_STRIDE     = 6'h34;
+    localparam [5:0]    REG_PIXEL_SIZE      = 6'h38;
     // localparam REG_BANK         = 6'h3F;
 
     localparam [5:0]    REQ_WAIT_HBLANK  = 6'h00;
@@ -107,7 +108,10 @@ module tqvp_rejunity_vga (
         if (!rst_n) begin
             bg_color <= 6'b010000;
             fg_color <= 6'b001011;
-            vram_stride <= DEFAULT_STRIDE;
+            
+            vram_stride     <= DEFAULT_STRIDE;
+            vga_x_per_pixel <= DEFAULT_PIXEL_WIDTH  - 7'd1;
+            vga_y_per_pixel <= DEFAULT_PIXEL_HEIGHT - 7'd1;
 
             pause_cpu   <= 1'b0;
             wait_hblank <= 1'b0;
@@ -126,6 +130,9 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_VRAM_STRIDE) begin
                     vram_stride <= data_in[8:0];
                     // if (data_write_n == 2'b00) // TODO: support 8-bit write as well by setting highest bit(s) to 0
+                end else if (address == REG_PIXEL_SIZE) begin // TODO: support 8-bit/16-bit writes
+                    vga_x_per_pixel <= data_in[0  +: 6];
+                    vga_y_per_pixel <= data_in[16 +: 6];
                 end
             // READ register
             end else if (~&data_read_n) begin
@@ -195,8 +202,6 @@ module tqvp_rejunity_vga (
             vram_index      <= 9'd0;
             vram_pixel_x    <= 7'd0;
             vram_pixel_y    <= 7'd0;
-            vga_x_per_pixel <= DEFAULT_PIXEL_WIDTH  - 7'd1;
-            vga_y_per_pixel <= DEFAULT_PIXEL_HEIGHT - 7'd1;
 
         end else if (vga_new_scanline) begin
             vram_pixel_x <= 7'd0;

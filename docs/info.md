@@ -39,7 +39,9 @@ TODO: Explain what your peripheral does and how it works
 | 0x31	  | FGCOLOR	| W		 | Foreground color: xxBBGGRR (default 001011, golden yellow)		|
 | 0x32	  | ??COLOR	| W		 | ???																|
 | 0x33	  | ??COLOR	| W		 | ???																|
-| 0x34	  | STRIDE	| W		 | 9-bit VRAM stride on a new scanline								|
+| 0x34	  | STRIDE	| W		 | VRAM stride per pixel row (bits 8..0) (default 20)               |
+| 0x38	  | PIXSIZE	| W		 | Pixel size: width in clocks (bits 6..0), height in scanlines (bits 22..16) |
+| 0x3C	  | MODE	| W		 | 																	|
 
 | Address | Name        | Access | Description                                                  |
 |---------|-------------|--------|--------------------------------------------------------------|
