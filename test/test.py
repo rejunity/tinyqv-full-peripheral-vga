@@ -54,19 +54,17 @@ async def test_project(dut):
     # assert await tqv.read_word_reg(0x10) == (0,0) # 0x82345678
 
     async def measure_hsync():
-        print(dut.uo_out.value)
-        cycles = 0
-        # assert dut.uo_out.value & 0x80 == 0x80  # inverted hsync
+        cycles_pre = 0
+        out_pre = dut.uo_out.value
         while (dut.uo_out.value & 0x80 == 0x80):
             await ClockCycles(dut.clk, 1)
-            cycles += 1
-        print("pre-hsync:", cycles)
+            cycles_pre += 1
         cycles = 0
-        print(dut.uo_out.value)
+        out_mid = dut.uo_out.value
         while (dut.uo_out.value & 0x80 != 0x80):
             await ClockCycles(dut.clk, 1)
             cycles += 1
-        print("hsync:", cycles)
+        print("pre-hsync out:", out_pre, "cycles:", cycles_pre, "hsync out:", out_mid, "cycles:", cycles)
         return cycles
     Y=2
     assert await tqv.read_word_reg(0x0) == (Y+0,0) # 0
