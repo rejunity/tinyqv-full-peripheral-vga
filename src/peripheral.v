@@ -148,8 +148,8 @@ module tqvp_rejunity_vga (
                     vram_stride <= data_in[8:0];
                     // if (data_write_n == 2'b00) // TODO: support 8-bit write as well by setting highest bit(s) to 0
                 end else if (address == REG_PIXEL_SIZE) begin // TODO: support 8-bit/16-bit writes
-                    vga_x_per_pixel <= data_in[0  +: 6];
-                    vga_y_per_pixel <= data_in[16 +: 6];
+                    vga_x_per_pixel <= data_in[0  +: 7];
+                    vga_y_per_pixel <= data_in[16 +: 7];
                 end else if (address == REG_MODE) begin
                     interrupt_type <= data_in[1:0];
                     vga_960_vs_1024 <= data_in[2];
