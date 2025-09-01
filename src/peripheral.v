@@ -292,7 +292,7 @@ module tqvp_rejunity_vga (
                       (color_index == 2'b10) ? f2_color :
                                                f3_color ;
             if (vram_pixel_x == vga_x_per_pixel) begin // push VRAM values into read pipe for 4-color mode
-                vram_read_pipe <= {vram_read_pipe[2:0], curr_vram_value};
+                vram_read_pipe <= {vram_read_pipe[1:0], curr_vram_value};
             end
         end
         hsync_buf <= vga_hsync;
