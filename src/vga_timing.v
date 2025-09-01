@@ -4,10 +4,8 @@ module vga_timing (
     input wire clk,
     input wire rst_n,
     input wire cli,
-    // output reg [5:0] x_hi,
-    // output reg [4:0] x_lo,
-    // output reg [4:0] y_hi,
-    // output reg [5:0] y_lo,
+    input wire enable_interrupt_on_hblank,
+    input wire enable_interrupt_on_vblank,
     output reg [10:0] x,
     output reg [ 9:0] y,
     output reg hsync,
@@ -60,7 +58,6 @@ always @(posedge clk) begin
         if (x == `H_SYNC) begin
             if (y == `V_NEXT) begin
                 y <= 0;
-                interrupt <= 1;
             end else begin
                 y <= y + 1;
                 retrace <= 1;
@@ -68,7 +65,11 @@ always @(posedge clk) begin
         end
         hsync <= !(x >= `H_SYNC && x < `H_BPORCH);
         vsync <=  (y >= `V_SYNC && y < `V_BPORCH);
-        if (cli || y > 0) begin
+        if ((y == `V_FPORCH && enable_interrupt_on_vblank) ||
+            (x == `H_FPORCH && enable_interrupt_on_hblank)) begin
+            interrupt <= 1;
+        end
+        if (cli || !blank) begin
             interrupt <= 0;
         end
     end

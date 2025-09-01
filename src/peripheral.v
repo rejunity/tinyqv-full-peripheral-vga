@@ -46,7 +46,7 @@ module tqvp_rejunity_vga (
 
 
     // TODO:
-    assign vga_cli = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
+
     // REG_SET_VRAM_INDEX = 10bit
     // REG_SET_1024vs960 = 1bit
     // REG_SET_4COLOR = 1bit
@@ -54,16 +54,15 @@ module tqvp_rejunity_vga (
     // \TODO
 
     `define PIXEL_COUNT 320
-    // localparam integer  PIXEL_COUNT      = 9'd320;
     localparam [5:0]    REG_LAST_PIXEL      = `PIXEL_COUNT / 8 - 1;
     localparam [5:0]    REG_BG_COLOR        = 6'h30;
     localparam [5:0]    REG_FG_COLOR        = 6'h31;
     localparam [5:0]    REG_VRAM_STRIDE     = 6'h34;
     localparam [5:0]    REG_PIXEL_SIZE      = 6'h38;
-    // localparam REG_BANK         = 6'h3F;
+    localparam [5:0]    REG_MODE            = 6'h3C;
 
-    localparam [5:0]    REQ_WAIT_HBLANK  = 6'h00;
-    localparam [5:0]    REQ_WAIT_PIXEL0  = 6'h04;
+    localparam [5:0]    REQ_WAIT_HBLANK     = 6'h00;
+    localparam [5:0]    REQ_WAIT_PIXEL0     = 6'h04;
     // localparam REG_Y            = 6'h10;
 
     // test 20x384
@@ -95,9 +94,11 @@ module tqvp_rejunity_vga (
     localparam DEFAULT_PIXEL_HEIGHT = 7'd2;
 
 
+    // registers
     reg [`PIXEL_COUNT-1:0] vram;
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
+    reg [1:0]   interrupt_type;
 
     reg         pause_cpu;
     reg         wait_hblank;
@@ -113,6 +114,8 @@ module tqvp_rejunity_vga (
             vga_x_per_pixel <= DEFAULT_PIXEL_WIDTH  - 7'd1;
             vga_y_per_pixel <= DEFAULT_PIXEL_HEIGHT - 7'd1;
 
+            interrupt_type  <= 2'b00;
+
             pause_cpu   <= 1'b0;
             wait_hblank <= 1'b0;
             wait_pixel0 <= 1'b0;
@@ -123,9 +126,9 @@ module tqvp_rejunity_vga (
                     if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
                         vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
                     end
-                end else if (address == REG_BG_COLOR) begin
+                end else if (address == REG_BG_COLOR) begin  // TODO: support 32-bit writes
                     bg_color <= data_in[5:0];
-                end else if (address == REG_FG_COLOR) begin
+                end else if (address == REG_FG_COLOR) begin  // TODO: support 32-bit writes
                     fg_color <= data_in[5:0];
                 end else if (address == REG_VRAM_STRIDE) begin
                     vram_stride <= data_in[8:0];
@@ -133,7 +136,10 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_PIXEL_SIZE) begin // TODO: support 8-bit/16-bit writes
                     vga_x_per_pixel <= data_in[0  +: 6];
                     vga_y_per_pixel <= data_in[16 +: 6];
+                end else if (address == REG_MODE) begin // TODO: support 8-bit/16-bit writes
+                    interrupt_type <= data_in[1:0];
                 end
+                
             // READ register
             end else if (~&data_read_n) begin
                 if          (address == REQ_WAIT_HBLANK) begin
@@ -159,7 +165,13 @@ module tqvp_rejunity_vga (
         end
     end
 
-    wire        vga_cli;
+    wire vga_cli          = (data_write_n != 2'b11); // Any write resets interrupt, TODO if need to be more careful
+    wire vga_ei_frame     = (interrupt_type == 2'b00);
+    wire vga_ei_scanline  = (interrupt_type == 2'b01);
+    wire vga_ei_pixline   = (interrupt_type == 2'b10);
+    wire vga_ei_vblank    = vga_ei_frame;
+    wire vga_ei_hblank    = vga_ei_scanline || (vga_ei_pixline && vram_pixel_y == vga_y_per_pixel);
+
     wire [10:0] vga_x;
     wire  [9:0] vga_y;
     wire        vga_hsync;
@@ -171,6 +183,8 @@ module tqvp_rejunity_vga (
         .clk,
         .rst_n,
         .cli(vga_cli),
+        .enable_interrupt_on_hblank(vga_ei_hblank),
+        .enable_interrupt_on_vblank(vga_ei_vblank),
         .x(vga_x),
         .y(vga_y),
         .hsync(vga_hsync),
