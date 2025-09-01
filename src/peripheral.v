@@ -124,7 +124,7 @@ module tqvp_rejunity_vga (
 
             interrupt_type  <= 2'b00;
             vga_960_vs_1024 <= 1'b0;
-            vga_4colors     <= 1'b1;
+            vga_4colors     <= 1'b0;
 
             pause_cpu   <= 1'b0;
             wait_hblank <= 1'b0;
@@ -153,7 +153,7 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_MODE) begin
                     interrupt_type <= data_in[1:0];
                     vga_960_vs_1024 <= data_in[2];
-                    // vga_4colors <= data_in[3];
+                    vga_4colors <= data_in[3];
                 end
                 
             // READ register
@@ -262,20 +262,40 @@ module tqvp_rejunity_vga (
     reg hsync_buf;
     reg vsync_buf;
 
-    wire [1:0] color_index = (vga_4colors)  ?        //vram[{vram_index[7:0], 1'b0} +: 2] // 4 colors
-                                                    vram[{vram_index[8:1], 1'b0} +: 2] // 4 colors
-                                            : {1'b0, vram[ vram_index ]};               // monochrome
+
+    //  012345678
+    // {ABCDABAB... }
+    //xxAB 
+    //    ^             vram_index[0] == 0
+    //  ABC
+    //     ^            vram_index[0] == 1
+
+    wire curr_vram_value = vram[vram_index];
+    reg [3:0] vram_read_pipe;
+    // wire [1:0] color_index = (vga_4colors)  ?        //vram[{vram_index[7:0], 1'b0} +: 2] // 4 colors
+    //                                                 vram[{vram_index[8:1], 1'b0} +: 2] // 4 colors
+    //                                         : {1'b0, vram[ vram_index ]};               // monochrome
+
+    wire [1:0] color_index = (vga_4colors && vram_index[0] == 0) ? vram_read_pipe[1:0]:
+                             (vga_4colors && vram_index[0] == 1) ? vram_read_pipe[2:1]:
+                                                                   {1'b0,   curr_vram_value} ; // monochrome
+
 
     always @(posedge clk) begin
         if (!rst_n) begin
             bbggrr <= 6'b00_00_00;
+            vram_read_pipe <= 4'b00_00;
         end else if (vga_blank) begin
             bbggrr <= 6'b00_00_00;
+            vram_read_pipe <= 4'b00_00;
         end else begin
             bbggrr <= (color_index == 2'b00) ? bg_color :
                       (color_index == 2'b01) ? fg_color :
                       (color_index == 2'b10) ? f2_color :
                                                f3_color ;
+            if (vram_pixel_x == vga_x_per_pixel) begin
+                vram_read_pipe <= {vram_read_pipe[2:0], curr_vram_value};
+            end
         end
         hsync_buf <= vga_hsync;
         vsync_buf <= vga_vsync;
