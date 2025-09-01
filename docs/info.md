@@ -35,11 +35,11 @@ TODO: Explain what your peripheral does and how it works
 | 0x1C    | PIXDAT7 | W      | Pixel data (1-bit per pixel) 224..255                            |
 | 0x20    | ????  	| ?      | ???									                       		|
 | 0x24    | ????  	| ?      | ???									                            |
-| 0x30	  | BGCOLOR | W	     | Background color: xxBBGGRR (default 010000, dark blue)			|
-| 0x31	  | FGCOLOR	| W		 | Foreground color: xxBBGGRR (default 001011, golden yellow)		|
+| 0x30	  | BGCOLOR | W	     | Background color: xxBBGGRR, default 010000 = dark blue			|
+| 0x31	  | FGCOLOR	| W		 | Foreground color: xxBBGGRR, default 001011 = golden yellow		|
 | 0x32	  | ??COLOR	| W		 | ???																|
 | 0x33	  | ??COLOR	| W		 | ???																|
-| 0x34	  | STRIDE	| W		 | VRAM stride per pixel row (bits 8..0) (default 20). Setting -1 will reset VRAM index to 0 on the next pixel row |
+| 0x34	  | STRIDE	| W		 | VRAM bit stride per pixel row (bits 8..0), default 20. Setting -1 will reset VRAM index to 0 on the next pixel row |
 | 0x38	  | PIXSIZE	| W		 | Pixel size: width in clocks (bits 6..0), height in scanlines (bits 22..16) |
 | 0x3C	  | MODE	| W		 | Interrupt: 0=frame, 1=scanline, 2=pixel row, 3=disabled (bits 1..0) |
 |    	  |     	|  		 | Screen width: 0=1024, 1=960 clocks (bit 2) |
@@ -47,8 +47,8 @@ TODO: Explain what your peripheral does and how it works
 | Address | Name        | Access | Description                                                  |
 |---------|-------------|--------|--------------------------------------------------------------|
 | 0x00    | WAIT_HBLANK | R      | Block CPU waiting for Horizontal BLANK                       |
-| 0x04    | WAIT_PIXEL0 | R      | Block CPU waiting for display to reach the 1st pixel of the buffer. |
-| 0x3F	  | VGA         | R	     | VGA status: interrupt (bit 0), vsync (bit 1), hsync (bit 2). Clears interrupt on read. |
+| 0x04    | WAIT_PIXEL0 | R      | Block CPU waiting for display to reach the 1st pixel of the buffer |
+| 0x08    | SCANLINE    | R      | Returns current scanlineL: 0..767 visible portion of the screen, >=768 offscreen |
 
 ## How to test
 
