@@ -124,7 +124,7 @@ module tqvp_rejunity_vga (
 
             interrupt_type  <= 2'b00;
             vga_960_vs_1024 <= 1'b0;
-            vga_4colors     <= 1'b0;
+            vga_4colors     <= 1'b1;
 
             pause_cpu   <= 1'b0;
             wait_hblank <= 1'b0;
