@@ -168,8 +168,8 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_F3_COLOR) begin
                     f3_color <= data_in[0 +: 6];
                 end else if (address == REG_VRAM_STRIDE) begin
-                    vram_stride <= data_in[7:0];
-                    vram_stride[8] <= is_write_8    ? 1'b0 // 8-bit write sets the highest bit(s) to 0
+                    vram_stride[7:0] <= data_in[7:0];
+                    vram_stride[8]   <= is_write_8  ? 1'b0 // 8-bit write sets the highest bit(s) to 0
                                                     : data_in[8];
                 end else if (address == REG_PIXEL_SIZE     && is_write_32) begin
                     vga_x_per_pixel <= data_in[0  +: 7];
