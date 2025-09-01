@@ -153,7 +153,7 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_MODE) begin
                     interrupt_type <= data_in[1:0];
                     vga_960_vs_1024 <= data_in[2];
-                    vga_4colors <= data_in[3];
+                    // vga_4colors <= data_in[3];
                 end
                 
             // READ register
