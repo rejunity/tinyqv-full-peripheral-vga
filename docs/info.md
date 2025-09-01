@@ -41,7 +41,8 @@ TODO: Explain what your peripheral does and how it works
 | 0x33	  | ??COLOR	| W		 | ???																|
 | 0x34	  | STRIDE	| W		 | VRAM stride per pixel row (bits 8..0) (default 20). Setting -1 will reset VRAM index to 0 on the next pixel row |
 | 0x38	  | PIXSIZE	| W		 | Pixel size: width in clocks (bits 6..0), height in scanlines (bits 22..16) |
-| 0x3C	  | MODE	| W		 | Interrupt type: 0=frame, 1=scanline, 2=pixel row, 3=disabled (bits 1..0) |
+| 0x3C	  | MODE	| W		 | Interrupt: 0=frame, 1=scanline, 2=pixel row, 3=disabled (bits 1..0) |
+|    	  |     	|  		 | Screen width: 0=1024, 1=960 clocks (bit 2) |
 
 | Address | Name        | Access | Description                                                  |
 |---------|-------------|--------|--------------------------------------------------------------|

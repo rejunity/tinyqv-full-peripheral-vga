@@ -6,6 +6,7 @@ module vga_timing (
     input wire cli,
     input wire enable_interrupt_on_hblank,
     input wire enable_interrupt_on_vblank,
+    input wire narrow_960,
     output reg [10:0] x,
     output reg [ 9:0] y,
     output reg hsync,
@@ -29,9 +30,22 @@ module vga_timing (
 // `define V_BPORCH (16 * 64 + 7)
 // `define V_NEXT   (16 * 64 + 29)
 
-`define H_FPORCH 1024
-`define H_SYNC   1072
-`define H_BPORCH 1176
+// 1024
+//  |          visible           |  blank |-=HSYNC=-|  blank  |
+//  |<---------- 1024 ---------->|<--48-->|<--104-->|<--151-->|
+//  0                            1024     1072      1176      1327
+
+// 960, additional blanks left&right 32 = (1024-960)/2
+//  |     visible    |     blank    |-=HSYNC=-|      blank    |
+//  |<----- 960 ---->|<-32-><--48-->|<--104-->|<--151--><-32->|
+//  0                960            1040      1144            1327
+
+//`define H_FPORCH 1024
+// `define H_SYNC   1072
+// `define H_BPORCH 1176
+`define H_FPORCH (narrow_960 ?  960 : 1024)
+`define H_SYNC   (narrow_960 ? 1040 : 1072)
+`define H_BPORCH (narrow_960 ? 1144 : 1176)
 `define H_NEXT   1327
 
 `define V_FPORCH 768

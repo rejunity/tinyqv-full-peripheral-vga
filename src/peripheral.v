@@ -46,7 +46,6 @@ module tqvp_rejunity_vga (
 
 
     // TODO:
-
     // REG_SET_VRAM_INDEX = 10bit
     // REG_SET_1024vs960 = 1bit
     // REG_SET_4COLOR = 1bit
@@ -99,6 +98,7 @@ module tqvp_rejunity_vga (
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
     reg [1:0]   interrupt_type;
+    reg         vga_960_vs_1024;
 
     reg         pause_cpu;
     reg         wait_hblank;
@@ -115,6 +115,7 @@ module tqvp_rejunity_vga (
             vga_y_per_pixel <= DEFAULT_PIXEL_HEIGHT - 7'd1;
 
             interrupt_type  <= 2'b00;
+            vga_960_vs_1024 <= 1'b0;
 
             pause_cpu   <= 1'b0;
             wait_hblank <= 1'b0;
@@ -136,8 +137,9 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_PIXEL_SIZE) begin // TODO: support 8-bit/16-bit writes
                     vga_x_per_pixel <= data_in[0  +: 6];
                     vga_y_per_pixel <= data_in[16 +: 6];
-                end else if (address == REG_MODE) begin // TODO: support 8-bit/16-bit writes
+                end else if (address == REG_MODE) begin
                     interrupt_type <= data_in[1:0];
+                    vga_960_vs_1024 <= data_in[2];
                 end
                 
             // READ register
@@ -185,6 +187,7 @@ module tqvp_rejunity_vga (
         .cli(vga_cli),
         .enable_interrupt_on_hblank(vga_ei_hblank),
         .enable_interrupt_on_vblank(vga_ei_vblank),
+        .narrow_960(vga_960_vs_1024),
         .x(vga_x),
         .y(vga_y),
         .hsync(vga_hsync),
