@@ -56,6 +56,8 @@ module tqvp_rejunity_vga (
     localparam [5:0]    REG_LAST_PIXEL      = `PIXEL_COUNT / 8 - 1;
     localparam [5:0]    REG_BG_COLOR        = 6'h30;
     localparam [5:0]    REG_FG_COLOR        = 6'h31;
+    localparam [5:0]    REG_F2_COLOR        = 6'h32;
+    localparam [5:0]    REG_F3_COLOR        = 6'h33;
     localparam [5:0]    REG_VRAM_STRIDE     = 6'h34;
     localparam [5:0]    REG_PIXEL_SIZE      = 6'h38;
     localparam [5:0]    REG_MODE            = 6'h3C;
@@ -97,8 +99,12 @@ module tqvp_rejunity_vga (
     reg [`PIXEL_COUNT-1:0] vram;
     reg [5:0]   bg_color;
     reg [5:0]   fg_color;
-    reg [1:0]   interrupt_type;
-    reg         vga_960_vs_1024;
+    reg [5:0]   f2_color;
+    reg [5:0]   f3_color;
+
+    reg [1:0]   interrupt_type;     // 0: interrupt per frame, 1: scanline, 2: pixel row, 3: interrupt disabled
+    reg         vga_960_vs_1024;    // 0: 1024 clocks, 1: 960 clocks per visible portion of scanline
+    reg         vga_4colors;        // 0: 2 color palette, 1: 4 color palette
 
     reg         pause_cpu;
     reg         wait_hblank;
@@ -109,6 +115,8 @@ module tqvp_rejunity_vga (
         if (!rst_n) begin
             bg_color <= 6'b010000;
             fg_color <= 6'b001011;
+            f2_color <= 6'b000000;
+            f3_color <= 6'b111111;
             
             vram_stride     <= DEFAULT_STRIDE;
             vga_x_per_pixel <= DEFAULT_PIXEL_WIDTH  - 7'd1;
@@ -116,6 +124,7 @@ module tqvp_rejunity_vga (
 
             interrupt_type  <= 2'b00;
             vga_960_vs_1024 <= 1'b0;
+            vga_4colors     <= 1'b0;
 
             pause_cpu   <= 1'b0;
             wait_hblank <= 1'b0;
@@ -131,6 +140,10 @@ module tqvp_rejunity_vga (
                     bg_color <= data_in[5:0];
                 end else if (address == REG_FG_COLOR) begin  // TODO: support 32-bit writes
                     fg_color <= data_in[5:0];
+                end else if (address == REG_F2_COLOR) begin  // TODO: support 32-bit writes
+                    f2_color <= data_in[5:0];
+                end else if (address == REG_F3_COLOR) begin  // TODO: support 32-bit writes
+                    f3_color <= data_in[5:0];
                 end else if (address == REG_VRAM_STRIDE) begin
                     vram_stride <= data_in[8:0];
                     // if (data_write_n == 2'b00) // TODO: support 8-bit write as well by setting highest bit(s) to 0
@@ -140,6 +153,7 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_MODE) begin
                     interrupt_type <= data_in[1:0];
                     vga_960_vs_1024 <= data_in[2];
+                    vga_4colors <= data_in[3];
                 end
                 
             // READ register
@@ -248,13 +262,20 @@ module tqvp_rejunity_vga (
     reg hsync_buf;
     reg vsync_buf;
 
+    wire [1:0] color_index = (vga_4colors)  ?        //vram[{vram_index[7:0], 1'b0} +: 2] // 4 colors
+                                                    vram[{vram_index[8:1], 1'b0} +: 2] // 4 colors
+                                            : {1'b0, vram[ vram_index ]};               // monochrome
+
     always @(posedge clk) begin
         if (!rst_n) begin
             bbggrr <= 6'b00_00_00;
         end else if (vga_blank) begin
             bbggrr <= 6'b00_00_00;
         end else begin
-            bbggrr <= vram[vram_index] ? fg_color : bg_color;
+            bbggrr <= (color_index == 2'b00) ? bg_color :
+                      (color_index == 2'b01) ? fg_color :
+                      (color_index == 2'b10) ? f2_color :
+                                               f3_color ;
         end
         hsync_buf <= vga_hsync;
         vsync_buf <= vga_vsync;
