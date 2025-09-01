@@ -105,6 +105,7 @@ module tqvp_rejunity_vga (
     reg [8:0]   vram_stride;
     reg [6:0]   vga_x_per_pixel;
     reg [6:0]   vga_y_per_pixel;
+
     reg [1:0]   interrupt_type;     // 0: interrupt per frame, 1: scanline, 2: pixel row, 3: interrupt disabled
     reg         vga_960_vs_1024;    // 0: 1024 clocks, 1: 960 clocks per visible portion of scanline
     reg         vga_4colors;        // 0: 2 color palette, 1: 4 color palette
@@ -113,6 +114,12 @@ module tqvp_rejunity_vga (
     reg         wait_hblank;
     reg         wait_pixel0;
     assign data_ready = !pause_cpu;
+
+    wire is_read = ~&data_read_n;
+    wire is_write = ~&data_write_n;
+    wire is_write_32 = (data_write_n == 2'b10);
+    wire is_write_16 = (data_write_n == 2'b01);
+    wire is_write_8  = (data_write_n == 2'b00);
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -134,25 +141,43 @@ module tqvp_rejunity_vga (
             wait_pixel0 <= 1'b0;
         end else begin
             // WRITE register
-            if (~&data_write_n) begin
-                if (address <= REG_LAST_PIXEL) begin
-                    if (data_write_n == 2'b10) begin // TODO: only 32-bit writes are supported atm
-                        vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
-                    end
-                end else if (address == REG_BG_COLOR) begin  // TODO: support 32-bit writes
-                    bg_color <= data_in[5:0];
-                end else if (address == REG_FG_COLOR) begin  // TODO: support 32-bit writes
-                    fg_color <= data_in[5:0];
-                end else if (address == REG_F2_COLOR) begin  // TODO: support 32-bit writes
-                    f2_color <= data_in[5:0];
-                end else if (address == REG_F3_COLOR) begin  // TODO: support 32-bit writes
-                    f3_color <= data_in[5:0];
+            if (is_write) begin
+                if (         address <= REG_LAST_PIXEL && is_write_32) begin
+                    vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
+                end else if (address <= REG_LAST_PIXEL && is_write_16) begin
+                    vram[{address[5:1],  4'b0000} +: 16] <= data_in[15:0];
+                end else if (address <= REG_LAST_PIXEL && is_write_8) begin
+                    vram[{address[5:0],   3'b000} +:  8] <= data_in[ 7:0];
+                end else if (address == REG_BG_COLOR && is_write_32) begin
+                    bg_color <= data_in[0  +: 6];
+                    fg_color <= data_in[8  +: 6];
+                    f2_color <= data_in[16 +: 6];
+                    f3_color <= data_in[24 +: 6];
+                end else if (address == REG_BG_COLOR && is_write_16) begin
+                    bg_color <= data_in[0 +: 6];
+                    fg_color <= data_in[8 +: 6];
+                end else if (address == REG_BG_COLOR && is_write_8) begin
+                    bg_color <= data_in[0 +: 6];
+                end else if (address == REG_FG_COLOR) begin
+                    fg_color <= data_in[0 +: 6];
+                end else if (address == REG_F2_COLOR && is_write_16) begin
+                    f2_color <= data_in[0 +: 6];
+                    f3_color <= data_in[8 +: 6];
+                end else if (address == REG_F2_COLOR && is_write_8) begin
+                    f2_color <= data_in[0 +: 6];
+                end else if (address == REG_F3_COLOR) begin
+                    f3_color <= data_in[0 +: 6];
                 end else if (address == REG_VRAM_STRIDE) begin
-                    vram_stride <= data_in[8:0];
-                    // if (data_write_n == 2'b00) // TODO: support 8-bit write as well by setting highest bit(s) to 0
-                end else if (address == REG_PIXEL_SIZE) begin // TODO: support 8-bit/16-bit writes
+                    vram_stride <= data_in[7:0];
+                    vram_stride[8] <= is_write_8    ? 1'b0 // 8-bit write sets the highest bit(s) to 0
+                                                    : data_in[8];
+                end else if (address == REG_PIXEL_SIZE     && is_write_32) begin
                     vga_x_per_pixel <= data_in[0  +: 7];
                     vga_y_per_pixel <= data_in[16 +: 7];
+                end else if (address == REG_PIXEL_SIZE     && is_write_16) begin
+                    vga_x_per_pixel <= data_in[0  +: 7];
+                end else if (address == REG_PIXEL_SIZE + 2 && is_write_16) begin
+                    vga_y_per_pixel <= data_in[0  +: 7];
                 end else if (address == REG_MODE) begin
                     interrupt_type <= data_in[1:0];
                     vga_960_vs_1024 <= data_in[2];
@@ -160,8 +185,8 @@ module tqvp_rejunity_vga (
                 end
                 
             // READ register
-            end else if (~&data_read_n) begin
-                if          (address == REQ_WAIT_HBLANK) begin
+            end else if (is_read) begin
+                if (         address == REQ_WAIT_HBLANK) begin
                     pause_cpu   <= 1'b1;
                     wait_hblank <= 1'b1;
                     wait_pixel0 <= 1'b0;
