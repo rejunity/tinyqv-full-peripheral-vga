@@ -262,38 +262,36 @@ module tqvp_rejunity_vga (
     reg hsync_buf;
     reg vsync_buf;
 
+    // NOTE: in 4-color mode visual pixel consist of 2 VRAM "entrees"
+    // VRAM read pipeline in 4-color mode:
+    //  012345678...=address in VRAM
+    // {ABCDABAB...}=VRAM
+    //{xAB}         =vram_read_pipe
+    //    ^---------?vram_index[0]==0
+    //  **<----------read locations from vram_read_pipe
 
-    //  012345678
-    // {ABCDABAB... }
-    //xxAB 
-    //    ^             vram_index[0] == 0
-    //  ABC
-    //     ^            vram_index[0] == 1
+    // {ABC}        =vram_read_pipe
+    //     ^--------?vram_index[0]==1
+    //  **<----------read locations from vram_read_pipe
 
     wire curr_vram_value = vram[vram_index];
-    reg [3:0] vram_read_pipe;
-    // wire [1:0] color_index = (vga_4colors)  ?        //vram[{vram_index[7:0], 1'b0} +: 2] // 4 colors
-    //                                                 vram[{vram_index[8:1], 1'b0} +: 2] // 4 colors
-    //                                         : {1'b0, vram[ vram_index ]};               // monochrome
-
-    wire [1:0] color_index = (vga_4colors && vram_index[0] == 0) ? vram_read_pipe[1:0]:
-                             (vga_4colors && vram_index[0] == 1) ? vram_read_pipe[2:1]:
-                                                                   {1'b0,   curr_vram_value} ; // monochrome
-
-
+    reg [2:0] vram_read_pipe;
+    wire [1:0] color_index = (vga_4colors && vram_index[0] == 0) ? vram_read_pipe[1:0]   : // 4-colors mid pixel
+                             (vga_4colors && vram_index[0] == 1) ? vram_read_pipe[2:1]   : // 4-colors
+                                                                 {1'b0, curr_vram_value} ; // 2-colors
     always @(posedge clk) begin
         if (!rst_n) begin
             bbggrr <= 6'b00_00_00;
-            vram_read_pipe <= 4'b00_00;
+            vram_read_pipe <= 3'b000;
         end else if (vga_blank) begin
             bbggrr <= 6'b00_00_00;
-            vram_read_pipe <= 4'b00_00;
+            vram_read_pipe <= 3'b000;
         end else begin
             bbggrr <= (color_index == 2'b00) ? bg_color :
                       (color_index == 2'b01) ? fg_color :
                       (color_index == 2'b10) ? f2_color :
                                                f3_color ;
-            if (vram_pixel_x == vga_x_per_pixel) begin
+            if (vram_pixel_x == vga_x_per_pixel) begin // push VRAM values into read pipe for 4-color mode
                 vram_read_pipe <= {vram_read_pipe[2:0], curr_vram_value};
             end
         end
