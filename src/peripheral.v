@@ -144,10 +144,10 @@ module tqvp_rejunity_vga (
             if (is_write) begin
                 if (         address <= REG_LAST_PIXEL && is_write_32) begin
                     vram[{address[5:2], 5'b00000} +: 32] <= data_in[31:0];
-                end else if (address <= REG_LAST_PIXEL && is_write_16) begin
-                    vram[{address[5:1],  4'b0000} +: 16] <= data_in[15:0];
-                end else if (address <= REG_LAST_PIXEL && is_write_8) begin
-                    vram[{address[5:0],   3'b000} +:  8] <= data_in[ 7:0];
+                // end else if (address <= REG_LAST_PIXEL && is_write_16) begin
+                //     vram[{address[5:1],  4'b0000} +: 16] <= data_in[15:0];
+                // end else if (address <= REG_LAST_PIXEL && is_write_8) begin
+                //     vram[{address[5:0],   3'b000} +:  8] <= data_in[ 7:0];
                 end else if (address == REG_BG_COLOR && is_write_32) begin
                     bg_color <= data_in[0  +: 6];
                     fg_color <= data_in[8  +: 6];
