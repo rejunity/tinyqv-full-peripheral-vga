@@ -102,6 +102,9 @@ module tqvp_rejunity_vga (
     reg [5:0]   f2_color;
     reg [5:0]   f3_color;
 
+    reg [8:0]   vram_stride;
+    reg [6:0]   vga_x_per_pixel;
+    reg [6:0]   vga_y_per_pixel;
     reg [1:0]   interrupt_type;     // 0: interrupt per frame, 1: scanline, 2: pixel row, 3: interrupt disabled
     reg         vga_960_vs_1024;    // 0: 1024 clocks, 1: 960 clocks per visible portion of scanline
     reg         vga_4colors;        // 0: 2 color palette, 1: 4 color palette
@@ -211,12 +214,9 @@ module tqvp_rejunity_vga (
         .interrupt(user_interrupt)
     );
 
-    reg [6:0] vga_x_per_pixel;
-    reg [6:0] vga_y_per_pixel;
     reg [6:0] vram_pixel_x;
     reg [6:0] vram_pixel_y;
     reg [8:0] vram_index_on_blank;
-    reg [8:0] vram_stride;
     reg [8:0] vram_index;
 
     wire [8:0] advance_vram_index_by_one    = (vram_index + 9'd1        < `PIXEL_COUNT)  ? vram_index + 9'd1
