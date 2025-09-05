@@ -111,10 +111,10 @@ module tqvp_rejunity_vga (
     reg         vga_63_5mhz;        // 0: 804 scanlines 64MHz, 1: 798 scanlines 63.5MHz, 
     reg         vga_4colors;        // 0: 2 color palette, 1: 4 color palette
 
-    reg         pause_cpu;
     reg         wait_hblank;
     reg         wait_pixel0;
-    assign data_ready = !pause_cpu;
+    reg         release_cpu_pulse;  // 1 cycle pulse after pausing cpu for wait_hblank or wait_pixel0
+    assign data_ready = release_cpu_pulse;
 
     wire is_read = ~&data_read_n;
     wire is_write = ~&data_write_n;
@@ -138,7 +138,7 @@ module tqvp_rejunity_vga (
             vga_63_5mhz     <= 1'b0; // default to 64 MHz
             vga_4colors     <= 1'b0;
 
-            pause_cpu   <= 1'b0;
+            release_cpu_pulse <= 1'b1; // hold data_ready=1 just in case during the reset
             wait_hblank <= 1'b0;
             wait_pixel0 <= 1'b0;
         end else begin
@@ -189,26 +189,30 @@ module tqvp_rejunity_vga (
                 
             // READ register
             end else if (is_read) begin
-                if (         address == REQ_WAIT_HBLANK) begin
-                    pause_cpu   <= 1'b1;
+                if (         address == REQ_WAIT_HBLANK && !release_cpu_pulse) begin
                     wait_hblank <= 1'b1;
                     wait_pixel0 <= 1'b0;
-                end else if (address == REQ_WAIT_PIXEL0) begin
-                    pause_cpu   <= 1'b1;
+                end else if (address == REQ_WAIT_PIXEL0 && !release_cpu_pulse) begin
                     wait_hblank <= 1'b0;
                     wait_pixel0 <= 1'b1;
+                end else begin
+                    release_cpu_pulse <= 1'b1; // immediately release CPU on all reads except WAIT ones
                 end
             end
 
+            if (!is_read)
+                release_cpu_pulse <= 1'b0;
+
             if (wait_hblank && vga_blank) begin // NOTE: do not block cpu during the VBLANK/VSYNC
                                                 // TODO: block until the next blank, if already inside the blank
-                pause_cpu   <= 1'b0;
+                release_cpu_pulse <= 1'b1;
                 wait_hblank <= 1'b0;
             end
             if (wait_pixel0 && vram_index == 0) begin
-                pause_cpu   <= 0;
+                release_cpu_pulse <= 1'b1;
                 wait_pixel0 <= 0;
             end
+
         end
     end
 

@@ -259,4 +259,4 @@ async def spi_read_cpha0 (clk, port_in, port_out, data_ready, address, data, wid
   port_in.value = result
   await ClockCycles(clk, SPI_HALF_CYCLE_DELAY)
 
-  return miso_byte, data_ready_delay
+  return miso_byte
