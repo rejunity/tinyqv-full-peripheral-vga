@@ -178,7 +178,7 @@ module tqvp_rejunity_vga (
                     vga_y_per_pixel <= data_in[0  +: 7];
                 end else if (address == REG_VRAM_STRIDE) begin
                     vram_stride[7:0] <= data_in[7:0];
-                    vram_stride[8]   <= is_write_8  ? 1'b0 // 8-bit write sets the highest bit(s) to 0
+                    vram_stride[8]  <= is_write_8   ? 1'b0 // 8-bit write sets the highest bit(s) to 0
                                                     : data_in[8];
                 end else if (address == REG_MODE) begin
                     interrupt_type  <= data_in[1:0];
@@ -190,27 +190,30 @@ module tqvp_rejunity_vga (
             // READ register
             end else if (is_read) begin
                 if (         address == REQ_WAIT_HBLANK && !release_cpu_pulse) begin
-                    wait_hblank <= 1'b1;
-                    wait_pixel0 <= 1'b0;
+                    wait_hblank     <= 1'b1;
+                    wait_pixel0     <= 1'b0;
                 end else if (address == REQ_WAIT_PIXEL0 && !release_cpu_pulse) begin
-                    wait_hblank <= 1'b0;
-                    wait_pixel0 <= 1'b1;
+                    wait_hblank     <= 1'b0;
+                    wait_pixel0     <= 1'b1;
                 end else begin
                     release_cpu_pulse <= 1'b1; // immediately release CPU on all reads except WAIT ones
                 end
             end
 
-            if (!is_read)
-                release_cpu_pulse <= 1'b0;
+            if (!is_read) begin
+                release_cpu_pulse   <= 1'b0;
+                wait_pixel0         <= 1'b0;
+                wait_hblank         <= 1'b0;
+            end
 
             if (wait_hblank && vga_blank) begin // NOTE: do not block cpu during the VBLANK/VSYNC
                                                 // TODO: block until the next blank, if already inside the blank
-                release_cpu_pulse <= 1'b1;
-                wait_hblank <= 1'b0;
+                release_cpu_pulse   <= 1'b1;
+                wait_hblank         <= 1'b0;
             end
             if (wait_pixel0 && vram_index == 0) begin
-                release_cpu_pulse <= 1'b1;
-                wait_pixel0 <= 0;
+                release_cpu_pulse   <= 1'b1;
+                wait_pixel0         <= 1'b0;
             end
 
         end
