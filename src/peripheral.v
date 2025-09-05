@@ -108,6 +108,7 @@ module tqvp_rejunity_vga (
 
     reg [1:0]   interrupt_type;     // 0: interrupt per frame, 1: scanline, 2: pixel row, 3: interrupt disabled
     reg         vga_960_vs_1024;    // 0: 1024 clocks, 1: 960 clocks per visible portion of scanline
+    reg         vga_63_5mhz;        // 0: 804 scanlines 64MHz, 1: 798 scanlines 63.5MHz, 
     reg         vga_4colors;        // 0: 2 color palette, 1: 4 color palette
 
     reg         pause_cpu;
@@ -134,6 +135,7 @@ module tqvp_rejunity_vga (
 
             interrupt_type  <= 2'b00;
             vga_960_vs_1024 <= 1'b0;
+            vga_63_5mhz     <= 1'b0; // default to 64 MHz
             vga_4colors     <= 1'b0;
 
             pause_cpu   <= 1'b0;
@@ -179,9 +181,10 @@ module tqvp_rejunity_vga (
                 end else if (address == REG_PIXEL_SIZE + 2 && is_write_16) begin
                     vga_y_per_pixel <= data_in[0  +: 7];
                 end else if (address == REG_MODE) begin
-                    interrupt_type <= data_in[1:0];
+                    interrupt_type  <= data_in[1:0];
                     vga_960_vs_1024 <= data_in[2];
-                    vga_4colors <= data_in[3];
+                    vga_63_5mhz     <= data_in[3];
+                    vga_4colors     <= data_in[4];
                 end
                 
             // READ register
@@ -230,6 +233,7 @@ module tqvp_rejunity_vga (
         .enable_interrupt_on_hblank(vga_ei_hblank),
         .enable_interrupt_on_vblank(vga_ei_vblank),
         .narrow_960(vga_960_vs_1024),
+        .extra_vblank_lines_for_64mhz(vga_63_5mhz),
         .x(vga_x),
         .y(vga_y),
         .hsync(vga_hsync),

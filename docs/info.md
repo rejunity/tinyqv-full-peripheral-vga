@@ -44,6 +44,7 @@ TODO: Explain what your peripheral does and how it works
 | 0x3C	  | MODE	| W		 | Interrupt: 0=frame, 1=scanline, 2=pixel row, 3=disabled (bits 1..0) |
 |    	  |     	|  		 | Screen width: 0=1024, 1=960 clocks (bit 2) |
 |		  |         |        | Color mode: 0=2 colors, 1=4 color palette |
+|    	  |     	|  		 | Pixel clock: 0=64 MHz 804 scanlines, 1=63.5 MHz 798 scanlines (bit 3) |
 
 | Address | Name        | Access | Description                                                  |
 |---------|-------------|--------|--------------------------------------------------------------|

@@ -7,6 +7,7 @@ module vga_timing (
     input wire enable_interrupt_on_hblank,
     input wire enable_interrupt_on_vblank,
     input wire narrow_960,
+    input wire extra_vblank_lines_for_64mhz,
     output reg [10:0] x,
     output reg [ 9:0] y,
     output reg hsync,
@@ -52,7 +53,7 @@ module vga_timing (
 `define V_SYNC   771
 `define V_BPORCH 775
 `define V_NEXT   797 // 803 
-
+`define V_NEXT   (extra_vblank_lines_for_64mhz ? 803 : 797)
 
 always @(posedge clk) begin
     if (!rst_n) begin
