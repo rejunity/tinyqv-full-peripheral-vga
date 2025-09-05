@@ -15,7 +15,7 @@ You can also include images in this folder and reference them in the markdown. E
 
 Author: ReJ aka Renaldas Zioma
 
-Peripheral index: nn
+Peripheral index: 12
 
 ## What it does
 
