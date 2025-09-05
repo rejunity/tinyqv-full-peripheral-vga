@@ -39,12 +39,12 @@ TODO: Explain what your peripheral does and how it works
 | 0x31	  | FGCOLOR	| W		 | Foreground color: xxBBGGRR, default 001011 = golden yellow		|
 | 0x32	  | P2COLOR	| W		 | 3rd color, if 4 color palette enabled: xxBBGGRR |
 | 0x33	  | P3COLOR	| W		 | 3th color, if 4 color palette enabled: xxBBGGRR |
-| 0x34	  | STRIDE	| W		 | VRAM bit stride per pixel row (bits 8..0), default 20. Setting -1 will reset VRAM index to 0 on the next pixel row |
-| 0x38	  | PIXSIZE	| W		 | Pixel size: width in clocks (bits 6..0), height in scanlines (bits 22..16) |
-| 0x3C	  | MODE	| W		 | Interrupt: 0=frame, 1=scanline, 2=pixel row, 3=disabled (bits 1..0) |
-|    	  |     	|  		 | Screen width: 0=1024, 1=960 clocks (bit 2) |
-|		  |         |        | Color mode: 0=2 colors, 1=4 color palette |
-|    	  |     	|  		 | Pixel clock: 0=64 MHz 804 scanlines, 1=63.5 MHz 798 scanlines (bit 3) |
+| 0x34       | PIXEL_SIZE | W 8bit      | Pixel size: width in clocks (bits 6..0), height in scanlines (bits 22..16) |
+| 0x38       | VRAM_STRIDE| W 32/16bit	| VRAM bit stride per pixel row (bits 8..0), default 20. Setting -1 will reset VRAM index to 0 on the next pixel row |
+| 0x3C	     | MODE	      | W	32/16/8bit| Interrupt: 0=frame, 1=scanline, 2=pixel row, 3=disabled (bits 1..0) |
+|            |            |          | Pixel clock: 0=64 MHz 804 scanlines, 1=63.5 MHz 798 scanlines (bit 4) |
+|            |            |          | Screen width: 0=1024, 1=960 clocks (bit 5) |
+|            |            |          | Color mode: 0=2 colors, 1=4 color palette (bit 6) |
 
 | Address | Name        | Access | Description                                                  |
 |---------|-------------|--------|--------------------------------------------------------------|

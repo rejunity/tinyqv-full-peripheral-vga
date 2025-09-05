@@ -58,8 +58,8 @@ module tqvp_rejunity_vga (
     localparam [5:0]    REG_FG_COLOR        = 6'h31;
     localparam [5:0]    REG_F2_COLOR        = 6'h32;
     localparam [5:0]    REG_F3_COLOR        = 6'h33;
-    localparam [5:0]    REG_VRAM_STRIDE     = 6'h34;
-    localparam [5:0]    REG_PIXEL_SIZE      = 6'h38;
+    localparam [5:0]    REG_PIXEL_SIZE      = 6'h34;
+    localparam [5:0]    REG_VRAM_STRIDE     = 6'h38;
     localparam [5:0]    REG_MODE            = 6'h3C;
 
     localparam [5:0]    REQ_WAIT_HBLANK     = 6'h00;
@@ -169,10 +169,6 @@ module tqvp_rejunity_vga (
                     f2_color <= data_in[0 +: 6];
                 end else if (address == REG_F3_COLOR) begin
                     f3_color <= data_in[0 +: 6];
-                end else if (address == REG_VRAM_STRIDE) begin
-                    vram_stride[7:0] <= data_in[7:0];
-                    vram_stride[8]   <= is_write_8  ? 1'b0 // 8-bit write sets the highest bit(s) to 0
-                                                    : data_in[8];
                 end else if (address == REG_PIXEL_SIZE     && is_write_32) begin
                     vga_x_per_pixel <= data_in[0  +: 7];
                     vga_y_per_pixel <= data_in[16 +: 7];
@@ -180,11 +176,15 @@ module tqvp_rejunity_vga (
                     vga_x_per_pixel <= data_in[0  +: 7];
                 end else if (address == REG_PIXEL_SIZE + 2 && is_write_16) begin
                     vga_y_per_pixel <= data_in[0  +: 7];
+                end else if (address == REG_VRAM_STRIDE) begin
+                    vram_stride[7:0] <= data_in[7:0];
+                    vram_stride[8]   <= is_write_8  ? 1'b0 // 8-bit write sets the highest bit(s) to 0
+                                                    : data_in[8];
                 end else if (address == REG_MODE) begin
                     interrupt_type  <= data_in[1:0];
-                    vga_960_vs_1024 <= data_in[2];
-                    vga_63_5mhz     <= data_in[3];
-                    vga_4colors     <= data_in[4];
+                    vga_63_5mhz     <= data_in[4];
+                    vga_960_vs_1024 <= data_in[5];
+                    vga_4colors     <= data_in[6];
                 end
                 
             // READ register
