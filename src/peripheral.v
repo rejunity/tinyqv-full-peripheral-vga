@@ -55,7 +55,7 @@ module tqvp_rejunity_vga (
     // 320 vram = 20x16 @ 1024x768
     localparam DEFAULT_STRIDE = 9'd20;
     localparam DEFAULT_PIXEL_WIDTH  = 7'd52; // 1024/20=~52
-    // localparam DEFAULT_PIXEL_HEIGHT = 7'd48; // 768/16=48
+    localparam DEFAULT_PIXEL_HEIGHT = 7'd48; // 768/16=48
 
     // 320 vram = 32x10 @ 1024x768
     // localparam DEFAULT_STRIDE = 9'd32;
@@ -68,8 +68,7 @@ module tqvp_rejunity_vga (
     // localparam DEFAULT_PIXEL_WIDTH  = 7'd54; // 1024/18=~54
     // localparam DEFAULT_PIXEL_HEIGHT = 7'd55; // 768/14=~55
 
-    localparam DEFAULT_PIXEL_HEIGHT = 7'd2;
-
+    // localparam DEFAULT_PIXEL_HEIGHT = 7'd2;
 
     // registers
     reg [`PIXEL_COUNT-1:0] vram;
