@@ -27,30 +27,6 @@ module tqvp_rejunity_vga (
 
     output        user_interrupt  // Dedicated interrupt request for this peripheral
 );
-    // length 
-
-
-    // 256 pixel vram (16x16, ~18x14, ~25x10)
-    // 256x3 = 768
-    // 256x4 = 1024
-
-    // 320 pixel vram (20x16)
-    // 320x3 = 960
-
-    // 384 pixel vram (24x16)
-    // 384x2 = 768
-    // 384x2.5 = 960
-
-    // vertical
-    // 192x4 = 256x3 = 384x2 = 768
-
-
-    // TODO:
-    // REG_SET_VRAM_INDEX = 10bit
-    // REG_SET_1024vs960 = 1bit
-    // REG_SET_4COLOR = 1bit
-    // REG_SET_COLOR2, REG_SET_COLOR3 = 6bit x 2
-    // \TODO
 
     `define PIXEL_COUNT 320
     localparam [5:0]    REG_LAST_PIXEL      = `PIXEL_COUNT / 8 - 1;
