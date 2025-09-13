@@ -11,7 +11,7 @@ You can also include images in this folder and reference them in the markdown. E
 512 kb in size, and the combined size of all images must be less than 1 MB.
 -->
 
-# 2/4 color flexible resolution VGA adapter for TinyQV
+# 4 color flexible resolution VGA adapter for TinyQV
 
 Author: ReJ aka Renaldas Zioma
 
@@ -33,7 +33,7 @@ Instead of large framebuffers, **Racing the Beam** technique was utilised to syn
 - **interrupts** can be used for a coarse wait - for the start of the frame or scanline,
 - **blocking reads** for precise syncronisation - for scanline or even in the middle of the scanline.
 
-Racing the Beam requires high CPU utilisation to support high screen resolutions. For example in case of a game, CPU could be processing game-pad inputs and executing gameplay logic only during the vertical blanking. The vertical blanking happens between scanlines 768 and 804 - roughly just 5% of the whole frame.
+Racing the Beam requires high CPU utilisation to support high screen resolutions. In the case of game, CPU could be processing game-pad inputs and executing gameplay logic only during the vertical blanking. The vertical blanking happens between scanlines 768 and 804 - roughly just 5% of the whole frame.
 
 Of course sacrifice up to 95% of CPU time is significant, but it might be worth for games or graphical demos. With this peripheral, it is up to you to decide!
 
