@@ -97,7 +97,7 @@ Read-only register to access the current scanline number - `SCANLINE`.
 
 ### Default 20 x 16 pixels
 
-By default VGA peripheral is configured to display screen at resolution of 20 x 16 pixels.
+By default VGA peripheral is configured to display screen resolution of 20 x 16 pixels.
 Write to `PIXELS` register to change the pixels. Each pixel is 1 bit and CPU is free to attend to other tasks.
 
 ### 4-color 160 x 192
@@ -114,7 +114,7 @@ Finally, calculated pixel horizontal and vertical counters dividing 960x768 the 
 	register[VRAM_STRIDE] = 0
 	register[PIXEL_SIZE] = (960 // 320 - 1) | ((768 // 192 - 1) << 16)
 
-To **Race the Beam** block CPU until the next horizontal blank reading from `WAIT_HBLANK` register and write into the `PIXELS` as fast you can!
+To **Race the Beam** block CPU until the next horizontal blank reading from `WAIT_HBLANK` registe, then write into the `PIXELS` as fast you can!
 
 	y = register[WAIT_HBLANK]
 	register[PIXELS] = ...
